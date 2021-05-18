@@ -8,7 +8,7 @@ ExecutorService executorService = Executors.newFixedThreadPool(4);
 ExecutorService executorService = Executors.newCachedThreadPool();
 
 // scheduled executor : for delay or interval based scheduling
-ScheduledExecutorService executorService = Executors.newScheduledThreadPool(4);
+ScheduledExecutorService scheduledExecService = Executors.newScheduledThreadPool(4);
 
 scheduledExecService.scheduleAtFixedRate(Runnable command, long initialDelay, long period, TimeUnit unit);
 scheduledExecService.scheduleWithFixedDelay(Runnable command, long initialDelay, long period, TimeUnit unit);
@@ -34,17 +34,48 @@ public class Task implements Callable<String> {
 public class ExecutorExample {
     public static void main(String[] args) {
 
-        Task task = new Task("World");
+      Task task = new Task("World");
 
-        ExecutorService executorService = Executors.newFixedThreadPool(4);
-        Future<String> result = executorService.submit(task);
+      ExecutorService executorService = Executors.newFixedThreadPool(4);
+      Future<String> result = executorService.submit(task);
+      //  using lambda can be done as follows 
+      //  executorService.submit(() -> System.out.println("I'm Runnable task."));
+      //  Future<Integer> result = executor.submit(() -> { System.out.println("I'm Callable task."); return 1 + 1;});
 
-        try {
-            System.out.println(result.get());
-        } catch (InterruptedException | ExecutionException e) {
-            System.out.println("Error occured while executing the submitted task");
-        }
-        // waits for shutdown , use shutdownNoww() to immediately return resources to os
-        executorService.shutdown();
+
+      try {
+          System.out.println(result.get());
+      } catch (InterruptedException | ExecutionException e) {
+          System.out.println("Error occured while executing the submitted task");
+      }
+      // waits for shutdown , use shutdownNoww() to immediately return resources to os
+      executorService.shutdown();
+        
+      // list of callable eg
+      List<Callable<Integer>> listOfCallable = Arrays.asList(() -> 1, () -> 2, () -> 3);
+      List<Future<Integer>> futures = executor.invokeAll(listOfCallable);
+      
     }
 }
+
+// ScheduleExecutor eg
+public class ScheduledExecutorCallable {
+    public static void main(String[] args) throws InterruptedException, ExecutionException {
+        private int count = 0;
+        ScheduledExecutorService ses = Executors.newScheduledThreadPool(1);
+        Callable<Integer> task2 = () -> { return ++count};
+
+        //run this task after 5 seconds, nonblock for task3, returns a future
+        ScheduledFuture<Integer> schedule = ses.schedule(task2, 5, TimeUnit.SECONDS);
+        // init Delay = 5, repeat the task every 1 second
+        ScheduledFuture<Integer> scheduledFuture = ses.scheduleAtFixedRate(task2, 5, 1, TimeUnit.SECONDS);
+        // to cancel the future. 
+        while(1) { Thread.sleep(1000); if(count ==  5){ scheduledFuture.cancel(true);} }
+        
+        // block and get the result
+        System.out.println(schedule.get());
+        ses.shutdown();
+    }
+}
+
+
