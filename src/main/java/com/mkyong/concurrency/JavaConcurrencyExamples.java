@@ -78,4 +78,20 @@ public class ScheduledExecutorCallable {
     }
 }
 
+//  While writing Thread Safe programs , use volatile field for reading and locks for writing . it makes sure that the threads always see the current values
+// Atomic :  An operation is atomic when you can safely perform the operation in parallel on multiple threads without using the synchronized keyword or locks 
+// Internally, the atomic classes make heavy use of compare-and-swap (CAS), an atomic instruction directly supported by most modern CPUs. 
+// Those instructions usually are much faster than synchronizing via locks
+
+// eg using atomic operations, outputs 2000
+AtomicInteger atomicInt = new AtomicInteger(0);
+
+IntStream.range(0, 1000)
+    .forEach(i -> {
+        Runnable task = () ->
+            atomicInt.updateAndGet(n -> n + 2);
+            // 0 + 2 , 2 + 2 , 4 + 2  ...
+        executor.submit(task);
+    }); 
+
 
