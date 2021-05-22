@@ -1,0 +1,69 @@
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+
+public class RateLimiter {
+
+    ConcurrentMap<String,ReqCounter> clientIdToRequestsMap = new ConcurrentHashMap<>();
+    private final int limit;
+
+    RateLimiter(int limit){
+        this.limit = limit;
+    }
+
+    public boolean isAllow(String clientId) {
+        long curSecond = System.currentTimeMillis() / 1000;
+        System.out.println("current second :" + curSecond);
+        ReqCounter reqCounter = new ReqCounter(0L,0L);
+
+        clientIdToRequestsMap.putIfAbsent(clientId,reqCounter);
+
+        synchronized (clientIdToRequestsMap.get(clientId)) {
+            ReqCounter current = clientIdToRequestsMap.get(clientId);
+            if(curSecond == current.second){
+                if(current.count >= this.limit) {
+                    System.out.println("count for current client id exceeded: " + current.count);
+                    return false;
+                } else {
+                    current.count = current.count + 1;
+                    clientIdToRequestsMap.put(clientId,current);
+                    System.out.println("count for current client id is within limits: " + current.count);
+                    return true;
+                }
+            } else {
+                current.second = curSecond;
+                current.count = 1L;
+                clientIdToRequestsMap.put(clientId,current);
+                return true;
+            }
+        }
+
+    }
+
+    public static class ReqCounter {
+        private Long second = 0L;
+        private Long count = 0L;
+
+        public ReqCounter(Long second, Long count){
+            this.second = second;
+            this.count = count;
+        }
+    }
+  
+}
+
+public class RateLimitTester {
+
+    public static void main(String[] args) {
+        RateLimiter rateLimiter = new RateLimiter(10);
+        ExecutorService executorService = Executors.newFixedThreadPool(10);
+
+        for(int i=1;i<15;i++)
+        {
+            int finalI = i;
+            executorService.submit(() -> {
+                boolean res = rateLimiter.isAllow("abc");
+                System.out.println("Request no " + finalI + " was allowed :" + res);
+            });
+        }
+    }
+}
