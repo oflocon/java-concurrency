@@ -13,8 +13,9 @@ ScheduledExecutorService scheduledExecService = Executors.newScheduledThreadPool
 scheduledExecService.scheduleAtFixedRate(Runnable command, long initialDelay, long period, TimeUnit unit);
 scheduledExecService.scheduleWithFixedDelay(Runnable command, long initialDelay, long period, TimeUnit unit);
 
+--------------------------------------------------------------------
 Callable -> returns a Future 
-Runnable -> return void/null
+Runnable -> return void/null  
   
 // Callable example 
 public class Task implements Callable<String> {
@@ -58,6 +59,7 @@ public class ExecutorExample {
     }
 }
 
+--------------------------------------------------------------------
 // ScheduleExecutor eg
 public class ScheduledExecutorCallable {
     public static void main(String[] args) throws InterruptedException, ExecutionException {
@@ -78,6 +80,7 @@ public class ScheduledExecutorCallable {
     }
 }
 
+--------------------------------------------------------------------
 //  While writing Thread Safe programs , use volatile field for reading and locks for writing . it makes sure that the threads always see the current values
 // Atomic :  An operation is atomic when you can safely perform the operation in parallel on multiple threads without using the synchronized keyword or locks 
 // Internally, the atomic classes make heavy use of compare-and-swap (CAS), an atomic instruction directly supported by most modern CPUs. 
@@ -94,4 +97,36 @@ IntStream.range(0, 1000)
         executor.submit(task);
     }); 
 
+--------------------------------------------------------------------
+// ThreadLocal usage 
+class RunnableDemo implements Runnable {
+   int counter;
+   ThreadLocal<Integer> threadLocalCounter = new ThreadLocal<Integer>();
 
+   public void run() {     
+      counter++;
+
+      if(threadLocalCounter.get() != null) {
+         threadLocalCounter.set(threadLocalCounter.get().intValue() + 1);
+      } else {
+         threadLocalCounter.set(0);
+      }
+      System.out.println("Counter: " + counter);
+      System.out.println("threadLocalCounter: " + threadLocalCounter.get());
+   }
+}
+
+RunnableDemo commonInstance = new RunnableDemo();
+Thread t1 = new Thread(commonInstance);
+Thread t2 = new Thread(commonInstance);
+// counter will increase but threadlocalcounter will not
+--------------------------------------------------------------------
+ // lock demo . similar to synchornized block but can lock unlock across methods , also provides option to time
+ //  ReentrantLock class allows a thread to lock a method even if it already have the lock on other method
+ private final Lock queueLock = new ReentrantLock();
+ queueLock.lock();
+ queueLock.unlock();
+ private static final ReentrantReadWriteLock lock = new ReentrantReadWriteLock(true);
+ // is no thread has acquired readWriteLock , multiple can acquire readLock(). only 1 write lock
+ lock.readLock().lock();
+ lock.writeLock().lock();
