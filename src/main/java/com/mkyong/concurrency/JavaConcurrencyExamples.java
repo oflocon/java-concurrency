@@ -130,3 +130,16 @@ Thread t2 = new Thread(commonInstance);
  // is no thread has acquired readWriteLock , multiple can acquire readLock(). only 1 write lock
  lock.readLock().lock();
  lock.writeLock().lock();
+
+--------------------------------------------------------------------
+  BlockingQueue<Integer> queue = new ArrayBlockingQueue<Integer>(10);
+  Producer producer = new Producer(queue);
+  Consumer consumer = new Consumer(queue);
+  new Thread(producer).start();
+  new Thread(consumer).start();
+  Producer implements Runnable{
+    run() -> queue.put(x);
+  }
+  Consumer implements Runnable{
+    run()-> queue.take();
+  }
